@@ -218,8 +218,9 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
 }
 .falt:focus { outline: 2px solid var(--sv-markering); outline-offset: -1px; background: var(--sv-yta-2); }
 .falt-fel { color: var(--sv-signal-fel); font-size: 14px; margin: -4px 0 var(--sv-steg-2) !important; }
-.meny--val { grid-template-columns: 1fr; min-width: 260px; }
-.meny--val button { flex-direction: row; justify-content: flex-start; gap: var(--sv-steg-2); padding: var(--sv-steg-2); font-size: 15px; color: var(--sv-text); }
+.meny.meny--val { grid-template-columns: 1fr; min-width: 260px; gap: 2px; padding: var(--sv-steg-1); }
+.meny.meny--val svg { width: 22px; height: 22px; border: 0; border-radius: 0; background: none; stroke: currentColor; stroke-width: 1.5; fill: none; flex: none; }
+.meny.meny--val button { min-height: var(--sv-tryckyta); flex-direction: row; align-items: center; justify-content: flex-start; gap: var(--sv-steg-2); padding: var(--sv-steg-2); font-size: 15px; color: var(--sv-text); }
 
 /* ---------- Timer under visning ---------- */
 .visa-timer {
@@ -256,6 +257,13 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
 }
 .sok:focus { outline: 2px solid var(--sv-markering); outline-offset: -1px; }
 .lista-yta { flex: 1; overflow-y: auto; padding: var(--sv-steg-4) var(--sv-steg-5) var(--sv-steg-5); }
+.paminn {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--sv-steg-1) var(--sv-steg-2);
+  margin-bottom: var(--sv-steg-4); padding: var(--sv-steg-2) var(--sv-steg-3);
+  background: var(--sv-yta-2); border: var(--sv-harlinje) solid var(--sv-linje-stark); border-radius: var(--sv-radie-kort);
+}
+.paminn p { flex: 1; min-width: 220px; margin: 0; font-size: 15px; line-height: 1.5; }
+.paminn .ikon { color: var(--sv-text-sekundar); }
 .filter { display: flex; flex-wrap: wrap; gap: var(--sv-steg-1); margin-bottom: var(--sv-steg-4); }
 .chip {
   display: inline-flex; align-items: center; gap: var(--sv-steg-1);
@@ -458,10 +466,10 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
   border: var(--sv-harlinje) solid #4A4844;
   border-radius: 16px;
   color: #F2F0EA;
-  opacity: 0.55;
-  transition: opacity 160ms ease;
 }
-.visa-rad:hover, .visa-rad:active { opacity: 1; }
+/* Raden kan ligga där läraren står: vänster, mitten eller höger */
+.visa-rad.plats-vanster, .visa-meny.plats-vanster { left: calc(var(--sv-steg-3) + env(safe-area-inset-left, 0px)); transform: none; }
+.visa-rad.plats-hoger, .visa-meny.plats-hoger { left: auto; right: calc(var(--sv-steg-3) + env(safe-area-inset-right, 0px)); transform: none; }
 .visa-rad button {
   display: inline-flex; align-items: center; justify-content: center;
   width: 64px; height: 56px;
@@ -692,6 +700,12 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
     <button class="knapp knapp--primar" id="nyPres" aria-label="Ny presentation"><svg class="ikon" data-ikon="plus"></svg><span class="knapp-text">Ny presentation</span></button>
   </header>
   <div class="lista-yta">
+    <div class="paminn" id="paminn" hidden>
+      <svg class="ikon" data-ikon="ladda-ner"></svg>
+      <p id="paminnText"></p>
+      <button class="knapp" id="paminnSpara">Spara alla som fil</button>
+      <button class="knapp knapp--tyst" id="paminnSenare">Påminn senare</button>
+    </div>
     <div class="filter" id="filter"></div>
     <div id="sektioner"></div>
     <div class="tomt" id="tomt" hidden>
@@ -711,9 +725,7 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
     <input class="red-falt" id="datum" type="date" aria-label="Lektionsdatum" title="Lektionsdatum">
     <span class="status" id="status"></span>
     <button class="knapp knapp--tyst" id="hjalpRed" aria-label="Hjälp"><svg class="ikon" data-ikon="fraga"></svg><span class="knapp-text">Hjälp</span></button>
-    <button class="knapp knapp--tyst" id="utseende" aria-label="Utseende"><svg class="ikon" data-ikon="tema"></svg><span class="knapp-text">Utseende</span></button>
-    <button class="knapp knapp--tyst" id="sparaMall" aria-label="Som mall" title="Spara som mall"><svg class="ikon" data-ikon="mall"></svg><span class="knapp-text">Som mall</span></button>
-    <button class="knapp knapp--tyst" id="exportera" aria-label="Spara fil"><svg class="ikon" data-ikon="ladda-ner"></svg><span class="knapp-text">Spara fil</span></button>
+    <button class="knapp knapp--tyst" id="arkiv" aria-label="Arkiv" aria-haspopup="menu"><svg class="ikon" data-ikon="mapp"></svg><span class="knapp-text">Arkiv</span></button>
   </header>
 
   <nav class="sidor" id="sidor" aria-label="Sidor"></nav>
@@ -735,9 +747,7 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
       <button class="vk" id="vkNySida"><svg class="ikon" data-ikon="ny-sida"></svg>Ny sida</button>
       <button class="vk" id="vkText"><svg class="ikon" data-ikon="text"></svg>Text</button>
       <button class="vk" id="vkBild"><svg class="ikon" data-ikon="bild"></svg>Bild</button>
-      <button class="vk" id="vkPdf"><svg class="ikon" data-ikon="pdf"></svg>Importera</button>
-      <button class="vk" id="vkMedia"><svg class="ikon" data-ikon="film"></svg>Media</button>
-      <button class="vk" id="vkTimer"><svg class="ikon" data-ikon="klocka"></svg>Timer</button>
+      <button class="vk" id="vkLaggTill" aria-haspopup="menu"><svg class="ikon" data-ikon="plus"></svg>Lägg till</button>
       <button class="vk" id="vkRita"><svg class="ikon" data-ikon="penna"></svg>Rita</button>
     </div>
     <div class="grupp" id="grpPenna" hidden>
@@ -821,6 +831,7 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
     <button id="visaZoom" aria-label="Zooma" title="Zooma" aria-pressed="false"><svg class="ikon" data-ikon="lupp"></svg></button>
     <button id="visaTimerKnapp" aria-label="Timer" title="Timer"><svg class="ikon" data-ikon="klocka"></svg></button>
     <button id="visaAnteckn" aria-label="Anteckningar (syns även på tavlan)" title="Anteckningar (syns även på tavlan)" aria-pressed="false"><svg class="ikon" data-ikon="anteckn"></svg></button>
+    <button id="visaFlytta" aria-label="Flytta raden" title="Flytta raden"><svg class="ikon" data-ikon="flytta"></svg></button>
     <button id="visaStang" aria-label="Avsluta"><svg class="ikon" data-ikon="kryss"></svg></button>
   </nav>
 </section>
@@ -885,16 +896,14 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
 
         <section id="h-bygga">
           <h3>Bygga sidor</h3>
-          <p>Tryck en gång på en text för att markera den och en gång till för att skriva. Klistra in bilder med Ctrl+V eller dra in dem från Filer.</p>
+          <p>Markera en text och börja skriva, eller tryck på den en gång till. Klistra in bilder med Ctrl+V eller dra in dem från Filer.</p>
           <div class="hjalp-tabell"><table>
             <thead><tr><th>Knapp</th><th>Vad den gör</th></tr></thead>
             <tbody>
               <tr><td>Ny sida</td><td>Lägger till en sida efter den du står på. Välj layout: rubrik, rubrik och text, rubrik och bild, helbild eller tom</td></tr>
               <tr><td>Text</td><td>Lägger till en textruta och börjar skriva direkt</td></tr>
               <tr><td>Bild</td><td>Väljer en bild från datorn. Stora bilder förminskas automatiskt</td></tr>
-              <tr><td>Importera</td><td>Lägger in sidor från en PDF eller PowerPoint-fil</td></tr>
-              <tr><td>Media</td><td>Lägger in en video eller ett ljud</td></tr>
-              <tr><td>Timer</td><td>Lägger in en nedräkning på sidan</td></tr>
+              <tr><td>Lägg till</td><td>Video eller ljud, YouTube-länk, timer, eller sidor från en PDF eller PowerPoint-fil</td></tr>
               <tr><td>Rita</td><td>Penna, överstrykningspenna och sudd</td></tr>
               <tr><td>Duplicera / Ta bort sida</td><td>Gäller sidan du står på</td></tr>
               <tr><td>Anteckningar</td><td>Visar eller döljer anteckningsfältet under sidan</td></tr>
@@ -908,7 +917,7 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
             <li>När något är markerat visas <b>Mindre</b>, <b>Större</b> och <b>Vänster/Centrerat</b> för text, och <b>Framåt</b>, <b>Bakåt</b> och <b>Ta bort</b> för alla element.</li>
             <li><b>Sortera sidorna</b> genom att dra miniatyrerna. Med fingret håller du kvar en kort stund innan du drar.</li>
             <li><b>Anteckningar</b> under sidan är dina talaranteckningar. En prick vid miniatyren visar att sidan har anteckningar.</li>
-            <li><b>Utseende</b> högst upp ger mörka sidor och väljer övergång mellan sidorna: tona, skjut eller ingen.</li>
+            <li><b>Arkiv</b> högst upp: utseende (mörka sidor, övergång mellan sidorna), spara som mall och spara fil.</li>
           </ul>
         </section>
 
@@ -947,11 +956,11 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
           <h3>Video, ljud och timer</h3>
           <p>Ljudet går ut via HDMI till tavlans högtalare. Video, ljud och timer startar du genom att trycka på dem under visningen.</p>
           <ul>
-            <li><b>Media</b> lägger in en video (MP4 eller WebM) eller ett ljud (till exempel MP3) från datorn.</li>
-            <li><b>YouTube:</b> välj <b>Media → YouTube-länk</b>, eller klistra in länken direkt på sidan med Ctrl+V. Videon kräver internet. När Bildspel är öppnat som fil på datorn öppnas videon i en ny flik. Stäng fliken med Ctrl+W för att komma tillbaka.</li>
+            <li><b>Lägg till → Video eller ljud</b> lägger in en video (MP4 eller WebM) eller ett ljud (till exempel MP3) från datorn.</li>
+            <li><b>YouTube:</b> välj <b>Lägg till → YouTube-länk</b>, eller klistra in länken direkt på sidan med Ctrl+V. Videon kräver internet. När Bildspel är öppnat som fil på datorn öppnas videon i en ny flik. Stäng fliken med Ctrl+W för att komma tillbaka.</li>
             <li>Markera en video eller ett ljud och tryck på <b>Autostart</b> om den ska börja spela när sidan visas.</li>
             <li>Under visning: tryck på videon eller ljudet för att spela och pausa. Tryck på raden längst ner i rutan för att hoppa i filen.</li>
-            <li><b>Timer</b> lägger in en nedräkning på 5 minuter. Ändra tiden med <b>−1 min</b> och <b>+1 min</b>.</li>
+            <li><b>Lägg till → Timer</b> lägger in en nedräkning på 5 minuter. Ändra tiden med <b>−1 min</b> och <b>+1 min</b>.</li>
             <li>Under visning: tryck på timern för att starta eller pausa. Om du byter sida flyttar den till en ruta uppe i hörnet.</li>
             <li>När tiden är ute blir timern grön och det hörs en kort signal.</li>
           </ul>
@@ -968,6 +977,7 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
               <tr><td>Luppen</td><td>Zoomar. En stående PDF-sida fyller hela bredden, andra sidor zoomas 2×. Dra för att flytta. Tryck igen för att återställa</td></tr>
               <tr><td>Klockan</td><td>Snabbtimer på 1, 2, 3, 5, 10, 15 eller 20 minuter</td></tr>
               <tr><td>Raderna</td><td>Visar dina anteckningar. Skärmen är speglad, så klassen ser dem också</td></tr>
+              <tr><td>Pilarna ⇆</td><td>Flyttar raden till vänster, mitten eller höger, så att den är nära där du står</td></tr>
               <tr><td>Krysset</td><td>Avslutar visningen</td></tr>
             </tbody>
           </table></div>
@@ -1004,8 +1014,9 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
           <h3>Spara, säkerhetskopiera och dela</h3>
           <p>Allt sparas automatiskt i webbläsaren på datorn, men bara där. Ta en säkerhetskopia med <b>Spara fil</b> då och då.</p>
           <ul>
-            <li><b>Spara fil</b> sparar presentationen som en fil, med bilder, video och ljud. Lägg filen i Google Drive.</li>
-            <li><b>Öppna fil</b> på startsidan läser in en sparad presentation, också en som en kollega har delat med dig.</li>
+            <li><b>Arkiv → Spara fil</b> sparar presentationen som en fil, med bilder, video och ljud. Lägg filen i Google Drive.</li>
+            <li>Har något ändrats utan att sparas som fil på en vecka visas en påminnelse på startsidan. <b>Spara alla som fil</b> sparar alla presentationer i en enda fil.</li>
+            <li><b>Öppna fil</b> på startsidan läser in en sparad presentation eller en hel säkerhetskopia, också en som en kollega har delat med dig.</li>
             <li>Presentationerna försvinner om Chromebooken återställs, om du byter dator eller om webbläsarens data rensas. Då behövs filen.</li>
             <li>Stora videor gör filen stor. Över 150 MB får du en varning.</li>
             <li>Lägg inte in elevers namn eller svar i presentationer som du delar.</li>
@@ -1129,6 +1140,8 @@ const IKONER = {
   'tema': '<circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 010 13z" fill="currentColor"/>',
   'fraga': '<circle cx="10" cy="10" r="7.5"/><path d="M7.8 7.8a2.3 2.3 0 114 1.6c-.9.6-1.8 1.1-1.8 2.3"/><path d="M10 14.2v.1"/>',
   'youtube': '<rect x="2.5" y="4.5" width="15" height="11" rx="3"/><path d="M8.5 7.5v5l4-2.5z"/>',
+  'mapp': '<path d="M2.5 5.5h5.5l1.5 2h8v8.5h-15z"/>',
+  'flytta': '<path d="M3 10h14M6 7l-3 3 3 3M14 7l3 3-3 3"/>',
   'lupp': '<circle cx="8.5" cy="8.5" r="5.5"/><path d="M12.5 12.5l4.5 4.5M6.5 8.5h4M8.5 6.5v4"/>'
 };
 function ikon(svg, namn) {
@@ -1677,6 +1690,7 @@ async function visaLista() {
   const allaInklMallar = await DB.alla();
   stadaMedia(allaInklMallar);
   const alla = allaInklMallar.filter(p => !p.mall);
+  visaPaminnelse(allaInklMallar);
   const grupper = [...new Set(alla.map(p => (p.grupp || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'sv'));
   if (filterGrupp && !grupper.includes(filterGrupp)) filterGrupp = '';
 
@@ -1724,6 +1738,39 @@ async function visaLista() {
     : 'Inga presentationer än. Skapa en ny eller öppna en sparad fil.';
 }
 $('#sok').addEventListener('input', () => visaLista());
+
+/* Säkerhetskopia: allt ligger bara i webbläsaren, så påminn när ändringar inte sparats som fil på en vecka */
+const VECKA = 7 * 864e5;
+function visaPaminnelse(alla) {
+  const sparade = INST.las('exporterade', {});
+  const osparade = alla.filter(p => !p.titel.startsWith('Exempel:') && p.andrad > (sparade[p.id] || 0));
+  const gammal = osparade.some(p => Date.now() - (sparade[p.id] || p.skapad) > VECKA);
+  const ruta = $('#paminn');
+  ruta.hidden = !gammal || Date.now() < INST.las('paminnSenare', 0);
+  if (ruta.hidden) return;
+  const senast = Math.max(0, ...Object.values(sparade));
+  const n = osparade.length;
+  $('#paminnText').textContent = `${n === 1 ? 'En presentation har' : n + ' presentationer har'} ändrats sedan ${senast ? 'säkerhetskopian ' + datumFormat.format(senast) : 'du började'} och finns bara i den här webbläsaren. Spara en fil och lägg den i Google Drive.`;
+}
+function markeraExporterade(ids) {
+  const sparade = INST.las('exporterade', {});
+  const nu = Date.now();
+  ids.forEach(id => { sparade[id] = nu; });
+  INST.skriv('exporterade', sparade);
+}
+async function exporteraAlla() {
+  const alla = (await DB.alla()).map(p => { const d = kopia(p); stadaBilder(d); return d; });
+  if (!alla.length) return;
+  const media = await samlaMedia(alla);
+  const blob = new Blob([JSON.stringify({ format: 'bildspel', version: 2, presentationer: alla, media })], { type: 'application/json' });
+  if (await sparaTillDatorn(`Bildspel säkerhetskopia ${idagStr()}.bildspel.json`, blob)) {
+    markeraExporterade(alla.map(p => p.id));
+    notis(`${alla.length === 1 ? 'En presentation' : alla.length + ' presentationer'} sparade i en fil.`);
+    visaLista();
+  }
+}
+$('#paminnSpara').onclick = exporteraAlla;
+$('#paminnSenare').onclick = () => { INST.skriv('paminnSenare', Date.now() + 3 * 864e5); $('#paminn').hidden = true; };
 
 /* Video- och ljudfiler som ingen presentation eller mall använder längre tas bort */
 /* Första gången: en exempelpresentation, så att man ser vad verktyget gör */
@@ -1926,28 +1973,33 @@ function dataTillBlob(d) {
   for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
   return new Blob([u], { type: typ });
 }
-async function exporteraFil(p) {
-  const data = kopia(p);
-  stadaBilder(data);
+async function samlaMedia(presentationer) {
   const media = {};
   const ids = new Set();
-  data.sidor.forEach(s => s.element.forEach(e => { if (e.media) ids.add(e.media); }));
+  presentationer.forEach(p => p.sidor.forEach(s => s.element.forEach(e => { if (e.media) ids.add(e.media); })));
   if (ids.size) notis('Förbereder filen…', false, true);
   for (const id of ids) {
     const m = await DB.hamtaMedia(id);
     if (m) media[id] = { typ: m.typ, namn: m.namn, data: await blobTillData(m.blob) };
   }
   if (ids.size) dolj();
+  return media;
+}
+async function exporteraFil(p) {
+  const data = kopia(p);
+  stadaBilder(data);
+  const media = await samlaMedia([data]);
   const blob = new Blob([JSON.stringify({ format: 'bildspel', version: 2, presentation: data, media })], { type: 'application/json' });
-  await sparaTillDatorn((p.titel.replace(/[\\/:*?"<>|]+/g, '').trim() || 'presentation') + '.bildspel.json', blob);
+  if (await sparaTillDatorn((p.titel.replace(/[\\/:*?"<>|]+/g, '').trim() || 'presentation') + '.bildspel.json', blob)) {
+    markeraExporterade([p.id]);
+  }
 }
 async function sparaTillDatorn(namn, blob) {
   if (iArtifact) {
     const dl = await window.claude.use('downloads');
     if (!dl) { notis('Det går inte att spara filer här. Öppna verktyget som fil på datorn i stället.', true); return; }
-    try { await dl.save({ filename: namn, data: blob }); }
-    catch (err) { if (err && err.code !== 'declined') notis('Filen kunde inte sparas.', true); }
-    return;
+    try { await dl.save({ filename: namn, data: blob }); return true; }
+    catch (err) { if (err && err.code !== 'declined') notis('Filen kunde inte sparas.', true); return false; }
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1956,8 +2008,9 @@ async function sparaTillDatorn(namn, blob) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  return true;
 }
-$('#exportera').onclick = () => { if (redigerarId) avslutaRedigering(); exporteraFil(P); };
+function sparaFilKnapp() { if (redigerarId) avslutaRedigering(); exporteraFil(P); }
 $('#oppnaFil').onclick = () => $('#filVal').click();
 $('#filVal').onchange = async e => {
   const fil = e.target.files[0];
@@ -1965,17 +2018,21 @@ $('#filVal').onchange = async e => {
   if (!fil) return;
   try {
     const data = JSON.parse(await fil.text());
-    const p = data && data.presentation;
-    if (data.format !== 'bildspel' || !p || !Array.isArray(p.sidor)) throw new Error('fel format');
-    p.bilder = p.bilder || {};
+    const lista = data && (data.presentationer || (data.presentation ? [data.presentation] : null));
+    if (data.format !== 'bildspel' || !Array.isArray(lista) || !lista.length || !lista.every(p => p && Array.isArray(p.sidor))) throw new Error('fel format');
     for (const [id, m] of Object.entries(data.media || {})) {
       await DB.sparaMedia({ id, blob: dataTillBlob(m.data), typ: m.typ, namn: m.namn });
       mediaUrler.delete(id);
     }
-    if (await DB.hamta(p.id)) { p.id = uid(); p.titel += ' (kopia)'; }
-    p.andrad = Date.now();
-    await DB.spara(p);
-    await oppna(p.id);
+    for (const p of lista) {
+      p.bilder = p.bilder || {};
+      // Samma presentation finns redan (t.ex. en säkerhetskopia av den här datorn): lägg in som kopia
+      if (await DB.hamta(p.id)) { p.id = uid(); p.titel += ' (kopia)'; }
+      p.andrad = Date.now();
+      await DB.spara(p);
+    }
+    if (!data.presentationer) await oppna(lista[0].id);
+    else { notis(lista.length === 1 ? 'En presentation inläst.' : `${lista.length} presentationer inlästa.`); visaLista(); }
   } catch (err) {
     notis('Filen gick inte att öppna. Den verkar inte vara en sparad presentation.', true);
   }
@@ -2016,14 +2073,14 @@ async function fyllGrupplista() {
   const grupper = [...new Set((await DB.alla()).map(p => (p.grupp || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'sv'));
   $('#grupplista').replaceChildren(...grupper.map(g => { const o = document.createElement('option'); o.value = g; return o; }));
 }
-$('#sparaMall').onclick = async () => {
+async function sparaSomMall() {
   if (redigerarId) avslutaRedigering();
   const m = kopia(P);
   m.id = uid(); m.mall = true; m.datum = ''; m.skapad = m.andrad = Date.now();
   stadaBilder(m);
   await DB.spara(m);
   notis(`”${m.titel}” finns nu bland mallarna under Ny presentation.`);
-};
+}
 
 /* Anteckningar per sida */
 const antecknFalt = $('#anteckning');
@@ -2228,6 +2285,46 @@ const ytaRedigera = {
   klar() { ritaTumme(aktuell); andrat(); }
 };
 
+/* Valmeny: en knapp som öppnar en kort lista (Lägg till, Arkiv) */
+function valMeny(knapp, id, val, uppat) {
+  const finns = $('#' + id);
+  if (finns) { finns.remove(); return; }
+  stangMeny();
+  document.querySelectorAll('.meny--val, #utseendeMeny').forEach(x => x.remove());
+  const m = document.createElement('div');
+  m.className = 'meny meny--val';
+  m.id = id;
+  m.setAttribute('role', 'menu');
+  const utanfor = e => { if (!m.contains(e.target) && !knapp.contains(e.target)) stang(); };
+  function stang() { m.remove(); document.removeEventListener('pointerdown', utanfor); }
+  for (const v of val) {
+    const b = document.createElement('button');
+    b.setAttribute('role', 'menuitem');
+    b.dataset.v = v.id;
+    b.innerHTML = `${ikonHtml(v.ikon)}<span></span>`;
+    $('span', b).textContent = v.text;
+    b.onclick = () => { stang(); v.gor(); };
+    m.appendChild(b);
+  }
+  document.body.appendChild(m);
+  const r = knapp.getBoundingClientRect();
+  if (uppat) { m.style.left = Math.max(8, r.left) + 'px'; m.style.bottom = (innerHeight - r.top + 8) + 'px'; }
+  else { m.style.top = (r.bottom + 8) + 'px'; m.style.right = Math.max(8, innerWidth - r.right) + 'px'; }
+  setTimeout(() => document.addEventListener('pointerdown', utanfor), 0);
+  $('button', m).focus();
+}
+$('#vkLaggTill').onclick = () => valMeny($('#vkLaggTill'), 'laggTillMeny', [
+  { id: 'media', ikon: 'film', text: 'Video eller ljud från datorn', gor: () => $('#mediaVal').click() },
+  { id: 'youtube', ikon: 'youtube', text: 'YouTube-länk', gor: () => visaYoutubeDialog() },
+  { id: 'timer', ikon: 'klocka', text: 'Timer', gor: () => laggTillTimer() },
+  { id: 'importera', ikon: 'pdf', text: 'Importera PDF eller PowerPoint', gor: () => visaImport(false) }
+], true);
+$('#arkiv').onclick = () => valMeny($('#arkiv'), 'arkivMeny', [
+  { id: 'utseende', ikon: 'tema', text: 'Utseende: mörka sidor och övergångar', gor: () => visaUtseende() },
+  { id: 'mall', ikon: 'mall', text: 'Spara som mall', gor: () => sparaSomMall() },
+  { id: 'fil', ikon: 'ladda-ner', text: 'Spara fil (säkerhetskopia)', gor: () => sparaFilKnapp() }
+], false);
+
 /* Video, ljud och timer i redigeraren */
 function videoMatt(fil) {
   return new Promise(res => {
@@ -2290,26 +2387,6 @@ async function laggTillMedia(filer) {
   ritaTumme(aktuell);
   andrat();
 }
-$('#vkMedia').onclick = () => {
-  if ($('#mediaMeny')) { $('#mediaMeny').remove(); return; }
-  const m = document.createElement('div');
-  m.className = 'meny meny--val';
-  m.id = 'mediaMeny';
-  m.innerHTML = `<button data-v="fil">${ikonHtml('film')}<span>Video eller ljud från datorn</span></button>
-    <button data-v="yt">${ikonHtml('youtube')}<span>YouTube-länk</span></button>`;
-  m.addEventListener('click', e => {
-    const b = e.target.closest('button');
-    if (!b) return;
-    m.remove();
-    if (b.dataset.v === 'fil') $('#mediaVal').click(); else visaYoutubeDialog();
-  });
-  document.body.appendChild(m);
-  const r = $('#vkMedia').getBoundingClientRect();
-  m.style.left = Math.max(8, r.left) + 'px';
-  m.style.bottom = (innerHeight - r.top + 8) + 'px';
-  const utanfor = e => { if (!e.target.closest('#mediaMeny, #vkMedia')) { m.remove(); document.removeEventListener('pointerdown', utanfor); } };
-  setTimeout(() => document.addEventListener('pointerdown', utanfor), 0);
-};
 function laggTillYoutube(yt, namn = '') {
   if (redigerarId) avslutaRedigering();
   sparaAngra();
@@ -2370,7 +2447,7 @@ $('#vkAuto').onclick = () => {
 function timerEl(sek, x = 580, y = 340) {
   return { id: uid(), typ: 'timer', sek, x, y, w: 440, h: 220 };
 }
-$('#vkTimer').onclick = () => {
+function laggTillTimer() {
   if (redigerarId) avslutaRedigering();
   sparaAngra();
   const el = timerEl(300);
@@ -2379,7 +2456,7 @@ $('#vkTimer').onclick = () => {
   ritaScen();
   ritaTumme(aktuell);
   andrat();
-};
+}
 function andraTimer(steg) {
   const el = hittaEl(valdId);
   if (!el || el.typ !== 'timer') return;
@@ -2421,15 +2498,14 @@ function visaUtseende() {
   });
   uppdatera();
   document.body.appendChild(m);
-  const r = $('#utseende').getBoundingClientRect();
+  const r = $('#arkiv').getBoundingClientRect();
   m.style.top = (r.bottom + 8) + 'px';
   m.style.right = Math.max(8, innerWidth - r.right) + 'px';
   const utanfor = e => {
-    if (!e.target.closest('#utseendeMeny, #utseende')) { m.remove(); document.removeEventListener('pointerdown', utanfor); }
+    if (!e.target.closest('#utseendeMeny, #arkiv')) { m.remove(); document.removeEventListener('pointerdown', utanfor); }
   };
   setTimeout(() => document.addEventListener('pointerdown', utanfor), 0);
 }
-$('#utseende').onclick = visaUtseende;
 
 /* Ny sida: layoutmeny */
 const LAYOUTER = [
@@ -2587,6 +2663,9 @@ const FANG = 12;
 scen.addEventListener('pointerdown', e => {
   if (e.button > 0) return;
   stangMeny();
+  // Ett tryck på sidan lämnar titel- eller anteckningsfältet, så att tangenterna går till sidan
+  const aktivt = document.activeElement;
+  if (aktivt && aktivt.matches && aktivt.matches('input, textarea')) aktivt.blur();
   if (penlage) { e.preventDefault(); startaRitning(e, ytaRedigera); return; }
   const traff = e.target.closest('.el');
   if (!traff) { avmarkera(); return; }
@@ -3249,7 +3328,6 @@ function visaImport(ny) {
   $('[data-valj]', bak).focus();
 }
 $('#franPdf').onclick = () => visaImport(true);
-$('#vkPdf').onclick = () => visaImport(false);
 $('#pdfVal').onchange = e => {
   const fil = e.target.files[0];
   e.target.value = '';
@@ -3475,6 +3553,19 @@ document.addEventListener('fullscreenchange', () => {
 });
 
 $('#visaNasta').onclick = nasta;
+const RADPLATSER = ['mitten', 'hoger', 'vanster'];
+function satRadplats(plats) {
+  for (const el of [$('#visaRad'), $('#timerMeny')]) {
+    el.classList.toggle('plats-vanster', plats === 'vanster');
+    el.classList.toggle('plats-hoger', plats === 'hoger');
+  }
+}
+satRadplats(INST.las('radplats', 'mitten'));
+$('#visaFlytta').onclick = () => {
+  const ny = RADPLATSER[(RADPLATSER.indexOf(INST.las('radplats', 'mitten')) + 1) % RADPLATSER.length];
+  INST.skriv('radplats', ny);
+  satRadplats(ny);
+};
 $('#visaForra').onclick = forra;
 $('#visaStang').onclick = avslutaVisning;
 $('#visaSlut').onclick = avslutaVisning;
@@ -3731,6 +3822,14 @@ document.addEventListener('keydown', e => {
   if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); $('#vkDuplicera').click(); return; }
   if (e.key === 'Escape') { stangMeny(); if (penlage) satPenlage(false); else avmarkera(); return; }
   if (valdId) {
+    // Som i Keynote och Google Presentationer: markerad text + en bokstav = börja skriva
+    const valt = hittaEl(valdId);
+    if (valt && valt.typ === 'text' && e.key.length === 1 && !mod && !e.altKey) {
+      e.preventDefault();
+      borjaRedigera(valt.id);
+      document.execCommand('insertText', false, e.key);
+      return;
+    }
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); taBortElement(); return; }
     if (e.key === 'Enter') { const el = hittaEl(valdId); if (el && el.typ === 'text') { e.preventDefault(); borjaRedigera(el.id); } return; }
     const pilar = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
