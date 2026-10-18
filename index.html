@@ -421,6 +421,14 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
 }
 /* Mörka sidor: för mörka klassrum */
 .sida.tema-mork { background: #1A1A18; color: #F2F0EA; --s-kant: rgba(242, 240, 234, 0.3); }
+/* Skrivbakgrunder i sidans enheter (1600 × 900): rutat 50, linjerat 60, prickat 50. Följer textfärgen, så de fungerar på mörka sidor. */
+.sida { --s-monster: color-mix(in srgb, currentColor 16%, transparent); }
+.sida.monster-rutat {
+  background-image: linear-gradient(var(--s-monster) 2px, transparent 2px), linear-gradient(90deg, var(--s-monster) 2px, transparent 2px);
+  background-size: 50px 50px; background-position: -1px -1px;
+}
+.sida.monster-linjerat { background-image: linear-gradient(transparent 58px, var(--s-monster) 58px, var(--s-monster) 60px); background-size: 100% 60px; }
+.sida.monster-prickat { background-image: radial-gradient(circle, color-mix(in srgb, currentColor 30%, transparent) 3px, transparent 3.5px); background-size: 50px 50px; background-position: 25px 25px; }
 .el { position: absolute; }
 .el-text { width: 100%; min-height: 100%; white-space: pre-wrap; overflow-wrap: break-word; outline: none; }
 .el--bild img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
@@ -816,6 +824,11 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
     <button id="timerPlus" aria-label="En minut till">+1</button>
     <button id="timerStang" aria-label="Stäng timern"><svg class="ikon" data-ikon="kryss"></svg></button>
   </div>
+  <div class="visa-meny" id="tavlaMeny" hidden>
+    <span>Tom tavla</span>
+    <button data-monster="">Vit</button><button data-monster="rutat">Rutat</button>
+    <button data-monster="linjerat">Linjerat</button><button data-monster="prickat">Prickat</button>
+  </div>
   <div class="visa-meny" id="timerMeny" hidden>
     <span>Timer</span>
     <button data-min="1">1</button><button data-min="2">2</button><button data-min="3">3</button>
@@ -838,6 +851,8 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
       <span class="avdelare"></span>
       <button id="visaAngra"><svg class="ikon" data-ikon="angra"></svg><span class="rad-etikett">Ångra</span></button>
       <button id="visaRensa"><svg class="ikon" data-ikon="rensa"></svg><span class="rad-etikett">Rensa</span></button>
+      <span class="avdelare"></span>
+      <button id="visaTomTavla"><svg class="ikon" data-ikon="ny-sida"></svg><span class="rad-etikett">Tom tavla</span></button>
     </div>
     <span class="avdelare" data-ej-rita></span>
     <button id="visaZoom" aria-pressed="false" data-ej-rita><svg class="ikon" data-ikon="lupp"></svg><span class="rad-etikett">Zooma</span></button>
@@ -930,7 +945,8 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
             <li>När något är markerat visas <b>Mindre</b>, <b>Större</b> och <b>Vänster/Centrerat</b> för text, och <b>Framåt</b>, <b>Bakåt</b> och <b>Ta bort</b> för alla element.</li>
             <li><b>Sortera sidorna</b> genom att dra miniatyrerna. Med fingret håller du kvar en kort stund innan du drar.</li>
             <li><b>Anteckningar</b> under sidan är dina talaranteckningar. En prick vid miniatyren visar att sidan har anteckningar.</li>
-            <li><b>Arkiv</b> högst upp: utseende (mörka sidor, övergång mellan sidorna), spara som mall och spara fil.</li>
+            <li><b>Arkiv</b> högst upp: utseende (mörka sidor, mönster på sidan, övergång mellan sidorna), spara som mall och spara fil.</li>
+            <li><b>Skrivytor:</b> välj <b>Ny sida → Rutat</b> eller <b>Linjerat</b> för en tom sida att skriva på. Mönster (rutat, linjerat, prickat) kan också läggas på vilken sida som helst under <b>Arkiv → Utseende</b>.</li>
           </ul>
         </section>
 
@@ -987,6 +1003,7 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
             <tbody>
               <tr><td>‹ och ›</td><td>Föregående och nästa sida. Du kan också svepa i sidled</td></tr>
               <tr><td>Rita</td><td>Ritar ovanpå sidan, med överstrykningspenna, sudd, färger, tre tjocklekar, ångra och rensa. Tryck på Rita igen för att sluta rita och kunna svepa</td></tr>
+              <tr><td>Tom tavla</td><td>Finns bland ritverktygen. Lägger in en tom sida (vit, rutad, linjerad eller prickad) efter den du står på, för en spontan genomgång. Skriver du på den kan du spara den som en ny sida när du avslutar, annars försvinner den</td></tr>
               <tr><td>Zooma</td><td>Zoomar. En stående PDF-sida fyller hela bredden, andra sidor zoomas 2×. Dra för att flytta. Tryck igen för att återställa</td></tr>
               <tr><td>Timer</td><td>Snabbtimer på 1, 2, 3, 5, 10, 15 eller 20 minuter</td></tr>
               <tr><td>Anteckn.</td><td>Visar dina anteckningar. Skärmen är speglad, så klassen ser dem också</td></tr>
@@ -1233,8 +1250,10 @@ const DB = {
 function textEl(x, y, w, h, storlek, platshallare, just = 'left', vikt = 400) {
   return { id: uid(), typ: 'text', x, y, w, h, text: '', storlek, just, vikt, platshallare };
 }
+const MONSTER = ['rutat', 'linjerat', 'prickat'];
 function nySida(layout) {
   const s = { id: uid(), layout, element: [] };
+  if (MONSTER.includes(layout)) s.monster = layout; // skrivyta: tom sida med mönster
   if (layout === 'titel') {
     s.element.push(textEl(120, 270, 1360, 190, 120, 'Rubrik', 'center', 500));
     s.element.push(textEl(120, 490, 1360, 100, 52, 'Underrubrik', 'center'));
@@ -1414,6 +1433,7 @@ function ritaSida(sida, p, mal, redigera = false, levande = false) {
   mal.replaceChildren(...sida.element.map(el => ritaElement(el, p, redigera, levande)), svg);
   mal.style.background = sida.bakgrund || '';
   mal.classList.toggle('tema-mork', !!p && p.tema === 'mork');
+  for (const m of MONSTER) mal.classList.toggle('monster-' + m, sida.monster === m);
 }
 
 /* ---------- Bläck ---------- */
@@ -2057,6 +2077,8 @@ async function oppnaSparadFil(fil) {
 async function oppna(id) {
   P = await DB.hamta(id);
   if (!P) return visaLista();
+  P.sidor = P.sidor.filter(s => !s.tillfallig || (s.blck && s.blck.length));
+  P.sidor.forEach(s => { delete s.tillfallig; });
   stadaBilder(P);
   aktuell = 0; valdId = null; redigerarId = null; angraStack = [];
   penlage = false;
@@ -2496,16 +2518,26 @@ function visaUtseende() {
   m.innerHTML = `
     <div class="val-grupp"><span>Sidor</span>
       <div class="segment" data-falt="tema"><button data-v="ljust">Ljusa</button><button data-v="mork">Mörka</button></div></div>
+    <div class="val-grupp"><span>Mönster på den här sidan</span>
+      <div class="segment" data-falt="monster"><button data-v="">Inget</button><button data-v="rutat">Rutat</button><button data-v="linjerat">Linjerat</button><button data-v="prickat">Prickat</button></div></div>
     <div class="val-grupp"><span>Övergång mellan sidor</span>
       <div class="segment" data-falt="overgang"><button data-v="tona">Tona</button><button data-v="skjut">Skjut</button><button data-v="ingen">Ingen</button></div></div>`;
   const uppdatera = () => m.querySelectorAll('.segment').forEach(seg => {
+    if (seg.dataset.falt === 'monster') {
+      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', (aktuellSida().monster || '') === b.dataset.v));
+      return;
+    }
     const std = seg.dataset.falt === 'tema' ? 'ljust' : 'tona';
     seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', (P[seg.dataset.falt] || std) === b.dataset.v));
   });
   m.addEventListener('click', e => {
     const b = e.target.closest('.segment button');
     if (!b) return;
-    P[b.closest('.segment').dataset.falt] = b.dataset.v;
+    const falt = b.closest('.segment').dataset.falt;
+    if (falt === 'monster') {
+      sparaAngra();
+      if (b.dataset.v) aktuellSida().monster = b.dataset.v; else delete aktuellSida().monster;
+    } else P[falt] = b.dataset.v;
     uppdatera();
     ritaScen();
     ritaTummar();
@@ -2528,7 +2560,9 @@ const LAYOUTER = [
   { id: 'titel-text', namn: 'Rubrik och text', svg: '<path d="M16 16h70M16 34h128M16 46h128M16 58h100"/>' },
   { id: 'titel-bild', namn: 'Rubrik och bild', svg: '<path d="M16 16h70"/><rect x="16" y="28" width="128" height="50" rx="2"/>' },
   { id: 'bild', namn: 'Helbild', svg: '<rect x="6" y="6" width="148" height="78" rx="2"/><path d="M6 70l40-30 30 20 30-25 48 40"/>' },
-  { id: 'tom', namn: 'Tom', svg: '' }
+  { id: 'tom', namn: 'Tom', svg: '' },
+  { id: 'rutat', namn: 'Rutat', svg: '<path d="M0 15h160M0 30h160M0 45h160M0 60h160M0 75h160M20 0v90M40 0v90M60 0v90M80 0v90M100 0v90M120 0v90M140 0v90" stroke-width="1.5"/>' },
+  { id: 'linjerat', namn: 'Linjerat', svg: '<path d="M0 18h160M0 36h160M0 54h160M0 72h160" stroke-width="1.5"/>' }
 ];
 function visaLayoutMeny() {
   stangMeny();
@@ -3509,23 +3543,34 @@ async function avslutaVisning() {
   $('#timerMeny').hidden = true;
   bytVy('redigera');
   anpassaScen();
+  const sistaId = (P.sidor[Math.min(visaIndex, P.sidor.length - 1)] || {}).id;
   const medBlck = P.sidor.filter(s => (tillf.get(s.id) || []).length);
+  const tavlorMedBlck = medBlck.filter(s => s.tillfallig).length;
+  let spara = false;
   if (medBlck.length) {
     const n = medBlck.length;
-    const spara = await fraga(
+    spara = await fraga(
       'Spara anteckningarna?',
-      `Du skrev på ${n === 1 ? 'en sida' : n + ' sidor'} under visningen. Sparar du dem blir de en del av presentationen.`,
+      `Du skrev på ${n === 1 ? 'en sida' : n + ' sidor'} under visningen. Sparar du dem blir de en del av presentationen.`
+        + (tavlorMedBlck ? (tavlorMedBlck === 1 ? ' Den tomma tavlan blir en ny sida.' : ' De tomma tavlorna blir nya sidor.') : ''),
       [{ text: 'Rensa', varde: false }, { text: 'Spara', varde: true, primar: true }]
     );
-    if (spara) {
-      sparaAngra();
-      for (const s of medBlck) s.blck = (s.blck || []).concat(tillf.get(s.id));
-      andrat();
-    }
   }
+  // Ångra-steget ska gälla presentationen som den var före visningen, utan tillfälliga tavlor
+  const fore = P.sidor.filter(s => !s.tillfallig);
+  if (spara) {
+    angraStack.push(JSON.stringify(fore));
+    $('#vkAngra').disabled = false;
+    for (const s of medBlck) s.blck = (s.blck || []).concat(tillf.get(s.id));
+  }
+  const hadeTavlor = P.sidor.length !== fore.length;
+  P.sidor = P.sidor.filter(s => !s.tillfallig || (spara && (tillf.get(s.id) || []).length));
+  P.sidor.forEach(s => { delete s.tillfallig; });
+  if (spara || hadeTavlor) andrat();
   tillf.clear();
   visaAngraStack = [];
-  gaTillSida(visaIndex, true);
+  const i = P.sidor.findIndex(s => s.id === sistaId);
+  gaTillSida(i >= 0 ? i : Math.min(visaIndex, P.sidor.length - 1), true);
 }
 
 /* Rita under visning: tillfälligt bläck som ligger ovanpå sidan */
@@ -3585,7 +3630,7 @@ document.addEventListener('fullscreenchange', () => {
 $('#visaNasta').onclick = nasta;
 const RADPLATSER = ['mitten', 'hoger', 'vanster'];
 function satRadplats(plats) {
-  for (const el of [$('#visaRad'), $('#timerMeny')]) {
+  for (const el of [$('#visaRad'), $('#timerMeny'), $('#tavlaMeny')]) {
     el.classList.toggle('plats-vanster', plats === 'vanster');
     el.classList.toggle('plats-hoger', plats === 'hoger');
   }
@@ -3604,7 +3649,7 @@ $('#visaSlut').onclick = avslutaVisning;
    Den stannar kvar när man ritar, har timermenyn öppen, håller musen över den eller är på slutskärmen. */
 const RAD_TID = 3000;
 let radTimer = null, musOverRad = false;
-function radBehovs() { return visaRitlage || !$('#timerMeny').hidden || musOverRad || visaSlut; }
+function radBehovs() { return visaRitlage || !$('#timerMeny').hidden || !$('#tavlaMeny').hidden || musOverRad || visaSlut; }
 function visaRaden() {
   $('#visaRad').classList.remove('dold');
   $('#visaAnteckning').classList.remove('rad-dold');
@@ -3628,7 +3673,7 @@ const pekare = new Map();
 const avstand = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 $('#visa').addEventListener('pointerdown', e => {
   if (e.target.closest('.visa-rad, .visa-timer, .visa-meny')) return;
-  if (!$('#timerMeny').hidden) { $('#timerMeny').hidden = true; return; }
+  if (!$('#timerMeny').hidden || !$('#tavlaMeny').hidden) { $('#timerMeny').hidden = true; $('#tavlaMeny').hidden = true; return; }
   pekare.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pekare.size === 2 && !ritarNu && !visaSlut) {
     // Två fingrar: nyp för att zooma
@@ -3775,7 +3820,25 @@ function timerRita() {
   $('#timerPaus').setAttribute('aria-label', TIMER.pausad ? 'Fortsätt' : 'Pausa');
   $('#timerPaus').disabled = TIMER.klar;
 }
-$('#visaTimerKnapp').onclick = () => { $('#timerMeny').hidden = !$('#timerMeny').hidden; };
+$('#visaTimerKnapp').onclick = () => { $('#tavlaMeny').hidden = true; $('#timerMeny').hidden = !$('#timerMeny').hidden; };
+
+/* Tom tavla: en tillfällig sida efter den man står på, för en spontan genomgång.
+   Den sparas bara om man skrivit på den och väljer Spara när visningen avslutas. */
+$('#visaTomTavla').onclick = () => { $('#timerMeny').hidden = true; $('#tavlaMeny').hidden = !$('#tavlaMeny').hidden; };
+$('#tavlaMeny').addEventListener('click', e => {
+  const b = e.target.closest('[data-monster]');
+  if (!b) return;
+  $('#tavlaMeny').hidden = true;
+  INST.skriv('tavlaMonster', b.dataset.monster);
+  const sida = { id: uid(), layout: 'tom', element: [], blck: [], tillfallig: true };
+  if (b.dataset.monster) sida.monster = b.dataset.monster;
+  const pos = visaSlut ? P.sidor.length : visaIndex + 1;
+  P.sidor.splice(pos, 0, sida);
+  visaSlut = false;
+  visaIndex = pos;
+  visaRiktning = 1;
+  ritaVisning();
+});
 $('#timerMeny').addEventListener('click', e => {
   const b = e.target.closest('[data-min]');
   if (!b) return;
