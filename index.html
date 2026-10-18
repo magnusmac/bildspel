@@ -201,6 +201,23 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
 .el--timer.pausad .el-timer { opacity: 0.45; }
 .el--timer.klar { border-color: var(--sv-signal-klart); color: var(--sv-signal-klart); }
 #visa .el--video, #visa .el--ljud, #visa .el--timer, #visa .el--youtube { cursor: pointer; }
+/* Uppgift i flera steg: storleken sätts i em utifrån rutans höjd (se ritaSteg) */
+.el--steg { display: flex; flex-direction: column; gap: 0.35em; line-height: 1.25; }
+.steg-rubrik { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6em; font-weight: 500; margin-bottom: 0.15em; }
+.steg-antal { font-weight: 400; font-size: 0.75em; opacity: 0.55; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.steg-rad { display: flex; align-items: center; gap: 0.55em; }
+.steg-nr {
+  flex: none; display: grid; place-items: center;
+  width: 1.45em; height: 1.45em; border-radius: 50%;
+  border: 0.07em solid currentColor; font-size: 0.85em; font-weight: 500; font-variant-numeric: tabular-nums;
+}
+.steg-nr svg { width: 0.9em; height: 0.9em; fill: none; stroke: currentColor; stroke-width: 3; }
+.steg-rad.klar .steg-nr { background: #3B6D11; border-color: #3B6D11; color: #fff; }
+.steg-rad.klar .steg-text { text-decoration: line-through; text-decoration-thickness: 0.06em; opacity: 0.45; }
+.el--steg.alla-klara .steg-antal { opacity: 1; color: #3B6D11; font-weight: 500; }
+.sida.tema-mork .steg-rad.klar .steg-nr { background: #8CC152; border-color: #8CC152; color: #1A1A18; }
+#visa .el--steg .steg-rad { cursor: pointer; }
+.falt--text { height: auto; padding: var(--sv-steg-1) var(--sv-steg-2); line-height: 1.5; resize: vertical; font-family: inherit; }
 .el--youtube { background: #2A2A28; }
 .el--youtube .yt-bild { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; user-select: none; }
 .el--youtube iframe { display: block; width: 100%; height: 100%; border: 0; }
@@ -793,6 +810,9 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
     <div class="grupp" id="grpMedia" hidden>
       <button class="vk" id="vkAuto" aria-pressed="false"><svg class="ikon" data-ikon="auto"></svg>Autostart</button>
     </div>
+    <div class="grupp" id="grpSteg" hidden>
+      <button class="vk" id="vkRedigeraSteg"><svg class="ikon" data-ikon="lista"></svg>Ändra steg</button>
+    </div>
     <div class="grupp" id="grpTimer" hidden>
       <button class="vk" id="vkTimerMinus"><svg class="ikon" data-ikon="minus"></svg>1 min</button>
       <button class="vk" id="vkTimerPlus"><svg class="ikon" data-ikon="plus"></svg>1 min</button>
@@ -931,7 +951,7 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
               <tr><td>Ny sida</td><td>Lägger till en sida efter den du står på. Välj layout: rubrik, rubrik och text, rubrik och bild, helbild eller tom</td></tr>
               <tr><td>Text</td><td>Lägger till en textruta och börjar skriva direkt</td></tr>
               <tr><td>Bild</td><td>Väljer en bild från datorn. Stora bilder förminskas automatiskt</td></tr>
-              <tr><td>Lägg till</td><td>Video eller ljud, YouTube-länk, timer, eller sidor från en PDF eller PowerPoint-fil</td></tr>
+              <tr><td>Lägg till</td><td>Video eller ljud, YouTube-länk, timer, uppgift i flera steg, eller sidor från en PDF eller PowerPoint-fil</td></tr>
               <tr><td>Rita</td><td>Penna, överstrykningspenna och sudd</td></tr>
               <tr><td>Duplicera / Ta bort sida</td><td>Gäller sidan du står på</td></tr>
               <tr><td>Anteckningar</td><td>Visar eller döljer anteckningsfältet under sidan</td></tr>
@@ -992,6 +1012,7 @@ h1 { font-size: 22px; font-weight: 500; line-height: 1.3; margin: 0; }
             <li><b>Lägg till → Timer</b> lägger in en nedräkning på 5 minuter. Ändra tiden med <b>−1 min</b> och <b>+1 min</b>.</li>
             <li>Under visning: tryck på timern för att starta eller pausa. Om du byter sida flyttar den till en ruta uppe i hörnet.</li>
             <li>När tiden är ute blir timern grön och det hörs en kort signal.</li>
+            <li><b>Lägg till → Uppgift i flera steg</b> gör en numrerad lista med stegen i en uppgift. Skriv ett steg per rad, gärna med en rubrik. Ändra med <b>Ändra steg</b> eller dubbelklick. Under visning trycker du på ett steg för att bocka av det, och rubriken visar hur många som är klara. Bockarna nollställs nästa gång du visar.</li>
           </ul>
         </section>
 
@@ -1172,6 +1193,7 @@ const IKONER = {
   'youtube': '<rect x="2.5" y="4.5" width="15" height="11" rx="3"/><path d="M8.5 7.5v5l4-2.5z"/>',
   'mapp': '<path d="M2.5 5.5h5.5l1.5 2h8v8.5h-15z"/>',
   'flytta': '<path d="M3 10h14M6 7l-3 3 3 3M14 7l3 3-3 3"/>',
+  'lista': '<path d="M8 5.5h9M8 10h9M8 14.5h9"/><circle cx="4" cy="5.5" r="1.2"/><circle cx="4" cy="10" r="1.2"/><circle cx="4" cy="14.5" r="1.2"/>',
   'lupp': '<circle cx="8.5" cy="8.5" r="5.5"/><path d="M12.5 12.5l4.5 4.5M6.5 8.5h4M8.5 6.5v4"/>'
 };
 function ikon(svg, namn) {
@@ -1309,6 +1331,8 @@ function ritaElement(el, p, redigera, levande) {
     ritaMedia(d, el, redigera, levande);
   } else if (el.typ === 'youtube') {
     ritaYoutube(d, el);
+  } else if (el.typ === 'steg') {
+    ritaSteg(d, el, levande && !redigera);
   } else if (el.typ === 'timer') {
     const t = document.createElement('div');
     t.className = 'el-timer';
@@ -1366,6 +1390,105 @@ function ritaMedia(d, el, redigera, levande) {
     if (!redigera && el.auto) m.play().catch(() => {});
   });
 }
+/* ---------- Uppgift i flera steg ---------- */
+const visaStegKlara = new Map(); // element-id → Set med avbockade steg, bara under visningen
+function ritaSteg(d, el, iVisning) {
+  const steg = el.steg || [];
+  const klara = (iVisning && visaStegKlara.get(el.id)) || new Set();
+  const rader = steg.length + (el.rubrik ? 1.25 : 0);
+  // Textstorlek i sidans enheter så att alla steg får plats i rutan
+  const fs = Math.max(18, Math.min(72, el.h / (rader * 1.8 + 0.2), el.w / 14));
+  d.style.fontSize = Math.round(fs) + 'px';
+  d.classList.toggle('alla-klara', steg.length > 0 && klara.size === steg.length);
+  d.replaceChildren();
+  if (el.rubrik) {
+    const r = document.createElement('div');
+    r.className = 'steg-rubrik';
+    r.innerHTML = '<span></span><span class="steg-antal"></span>';
+    r.firstChild.textContent = el.rubrik;
+    $('.steg-antal', r).textContent = iVisning ? `${klara.size} av ${steg.length} klara` : `${steg.length} steg`;
+    d.appendChild(r);
+  }
+  steg.forEach((text, i) => {
+    const rad = document.createElement('div');
+    rad.className = 'steg-rad' + (klara.has(i) ? ' klar' : '');
+    rad.dataset.i = i;
+    rad.innerHTML = '<span class="steg-nr"></span><span class="steg-text"></span>';
+    const nr = $('.steg-nr', rad);
+    if (klara.has(i)) nr.innerHTML = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>';
+    else nr.textContent = i + 1;
+    $('.steg-text', rad).textContent = text;
+    d.appendChild(rad);
+  });
+}
+function bockaSteg(div, el, mal) {
+  const rad = mal.closest && mal.closest('.steg-rad');
+  if (!rad) return;
+  const i = +rad.dataset.i;
+  const klara = visaStegKlara.get(el.id) || new Set();
+  if (klara.has(i)) klara.delete(i); else klara.add(i);
+  visaStegKlara.set(el.id, klara);
+  ritaSteg(div, el, true);
+}
+// Godtar numrerade rader, punkter och tomma rader (Postel)
+function tolkaSteg(text) {
+  return text.split('\n').map(r => r.trim().replace(/^(\d+[.):]|[-–•*])\s*/, '').trim()).filter(Boolean);
+}
+function visaStegDialog(el, nytt) {
+  const bak = document.createElement('div');
+  bak.className = 'dialog-bak';
+  bak.innerHTML = `<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="stegRubrikH">
+    <h2 id="stegRubrikH">Uppgift i flera steg</h2>
+    <p>Under visningen trycker du på ett steg för att bocka av det.</p>
+    <label class="falt-etikett" for="stegRubrik">Rubrik (valfri)</label>
+    <input class="falt" id="stegRubrik" autocomplete="off">
+    <label class="falt-etikett" for="stegText">Steg, ett per rad (högst 10)</label>
+    <textarea class="falt falt--text" id="stegText" rows="6"></textarea>
+    <p class="falt-fel" id="stegFel" hidden></p>
+    <div class="dialog-rad"><button class="knapp" data-avbryt>Avbryt</button><button class="knapp knapp--primar" data-ok>Klar</button></div>
+  </div>`;
+  $('#stegRubrik', bak).value = el.rubrik || '';
+  $('#stegText', bak).value = (el.steg || []).join('\n');
+  const stang = () => { bak.remove(); if (nytt) { ritaScen(); ritaTumme(aktuell); } };
+  const ok = () => {
+    const steg = tolkaSteg($('#stegText', bak).value);
+    if (!steg.length) {
+      const fel = $('#stegFel', bak);
+      fel.textContent = 'Skriv minst ett steg.';
+      fel.hidden = false;
+      return;
+    }
+    if (!nytt) sparaAngra();
+    el.rubrik = $('#stegRubrik', bak).value.trim();
+    el.steg = steg.slice(0, 10);
+    bak.remove();
+    if (steg.length > 10) notis('Bara de första 10 stegen kom med. Dela upp uppgiften om den har fler.');
+    ritaScen();
+    ritaTumme(aktuell);
+    andrat();
+  };
+  $('[data-avbryt]', bak).onclick = stang;
+  $('[data-ok]', bak).onclick = ok;
+  bak.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.preventDefault(); stang(); }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || e.target.id === 'stegRubrik')) { e.preventDefault(); ok(); }
+  });
+  bak.addEventListener('pointerdown', e => { if (e.target === bak) stang(); });
+  document.body.appendChild(bak);
+  $(nytt ? '#stegText' : '#stegRubrik', bak).focus();
+}
+function laggTillSteg() {
+  if (redigerarId) avslutaRedigering();
+  sparaAngra();
+  const el = { id: uid(), typ: 'steg', rubrik: 'Gör så här', steg: ['Läs uppgiften', 'Arbeta själv i 10 minuter', 'Jämför med en kompis', 'Visa läraren'], x: 160, y: 200, w: 900, h: 560 };
+  aktuellSida().element.push(el);
+  valdId = el.id;
+  ritaScen();
+  ritaTumme(aktuell);
+  andrat();
+  visaStegDialog(el, true);
+}
+
 /* ---------- YouTube ---------- */
 /* Fil på datorn (file://) och artifact: YouTube spelar inte inbäddat där, så videon öppnas i en ny flik.
    På en webbadress (http/https) spelas den direkt på sidan. */
@@ -2200,6 +2323,7 @@ function ritaVerktyg() {
   $('#grpText').hidden = !el || el.typ !== 'text';
   $('#grpMedia').hidden = !el || (el.typ !== 'video' && el.typ !== 'ljud');
   $('#grpTimer').hidden = !el || el.typ !== 'timer';
+  $('#grpSteg').hidden = !el || el.typ !== 'steg';
   if (el && (el.typ === 'video' || el.typ === 'ljud')) $('#vkAuto').setAttribute('aria-pressed', !!el.auto);
   $('#vkTaBortSida').disabled = P.sidor.length <= 1;
   if (el && el.typ === 'text') {
@@ -2354,6 +2478,7 @@ $('#vkLaggTill').onclick = () => valMeny($('#vkLaggTill'), 'laggTillMeny', [
   { id: 'media', ikon: 'film', text: 'Video eller ljud från datorn', gor: () => $('#mediaVal').click() },
   { id: 'youtube', ikon: 'youtube', text: 'YouTube-länk', gor: () => visaYoutubeDialog() },
   { id: 'timer', ikon: 'klocka', text: 'Timer', gor: () => laggTillTimer() },
+  { id: 'steg', ikon: 'lista', text: 'Uppgift i flera steg', gor: () => laggTillSteg() },
   { id: 'importera', ikon: 'pdf', text: 'Importera PDF eller PowerPoint', gor: () => visaImport(false) }
 ], true);
 $('#arkiv').onclick = () => valMeny($('#arkiv'), 'arkivMeny', [
@@ -2762,7 +2887,11 @@ scen.addEventListener('pointerdown', e => {
     scen.removeEventListener('pointercancel', slut);
     $('#stodV').classList.remove('syns');
     $('#stodH').classList.remove('syns');
-    if (flyttat) { ritaTumme(aktuell); andrat(); }
+    if (flyttat) {
+      if (arHandtag && el.typ === 'steg') ritaScen(); // textstorleken följer rutans storlek
+      ritaTumme(aktuell);
+      andrat();
+    }
     else if (varVald && el.typ === 'text') borjaRedigera(id);
   };
   scen.addEventListener('pointermove', flytt);
@@ -2775,8 +2904,10 @@ scen.addEventListener('dblclick', e => {
   if (traff && redigerarId !== traff.dataset.id) {
     const el = hittaEl(traff.dataset.id);
     if (el && el.typ === 'text') borjaRedigera(el.id);
+    if (el && el.typ === 'steg') visaStegDialog(el, false);
   }
 });
+$('#vkRedigeraSteg').onclick = () => { const el = hittaEl(valdId); if (el && el.typ === 'steg') visaStegDialog(el, false); };
 
 /* Skriva text */
 function borjaRedigera(id) {
@@ -3407,6 +3538,7 @@ function starta(fran) {
   visaIndex = Math.max(0, Math.min(P.sidor.length - 1, fran));
   visaSlut = false;
   tillf.clear();
+  visaStegKlara.clear();
   visaAngraStack = [];
   satVisaRitlage(false);
   timerStopp();
@@ -3718,7 +3850,7 @@ $('#visa').addEventListener('pointerup', e => {
     const p = panorera;
     panorera = null;
     if (!p.flyttat) {
-      const div = p.mal.closest && p.mal.closest('#visaSida .el--video, #visaSida .el--ljud, #visaSida .el--timer, #visaSida .el--youtube');
+      const div = p.mal.closest && p.mal.closest('#visaSida .el--video, #visaSida .el--ljud, #visaSida .el--timer, #visaSida .el--youtube, #visaSida .el--steg');
       if (div) tryckPaElement(div, p.mal, e);
     }
     return;
@@ -3732,7 +3864,7 @@ $('#visa').addEventListener('pointerup', e => {
   }
   // Ett tryck (utan svep) på video, ljud eller timer styr den
   if (Math.hypot(dx, dy) < 12) {
-    const div = mal.closest && mal.closest('#visaSida .el--video, #visaSida .el--ljud, #visaSida .el--timer, #visaSida .el--youtube');
+    const div = mal.closest && mal.closest('#visaSida .el--video, #visaSida .el--ljud, #visaSida .el--timer, #visaSida .el--youtube, #visaSida .el--steg');
     if (div) tryckPaElement(div, mal, e);
   }
 });
@@ -3740,6 +3872,7 @@ function tryckPaElement(div, mal, e) {
   const el = P.sidor[visaIndex].element.find(x => x.id === div.dataset.id);
   if (!el) return;
   if (el.typ === 'youtube') { spelaYoutube(div, el); return; }
+  if (el.typ === 'steg') { bockaSteg(div, el, mal); return; }
   if (el.typ === 'timer') {
     if (TIMER.aktiv && TIMER.kalla === el.id) {
       if (TIMER.klar) timerStopp(); else timerPaus();
@@ -3946,7 +4079,12 @@ document.addEventListener('keydown', e => {
       return;
     }
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); taBortElement(); return; }
-    if (e.key === 'Enter') { const el = hittaEl(valdId); if (el && el.typ === 'text') { e.preventDefault(); borjaRedigera(el.id); } return; }
+    if (e.key === 'Enter') {
+      const el = hittaEl(valdId);
+      if (el && el.typ === 'text') { e.preventDefault(); borjaRedigera(el.id); }
+      if (el && el.typ === 'steg') { e.preventDefault(); visaStegDialog(el, false); }
+      return;
+    }
     const pilar = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
     if (pilar[e.key]) {
       e.preventDefault();
